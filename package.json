@@ -1,0 +1,27 @@
+{
+  "name": "chat-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "prestart": "npm install",
+    "start": "forever server.js",
+    "watch": "forever -w server.js"
+  },
+  "author": "Netology",
+  "license": "ISC",
+  "engines": {
+    "node": "12.x"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^9.0.3",
+    "forever": "^4.0.3",
+    "http-event-stream": "^0.2.0",
+    "koa": "^2.13.1",
+    "koa-body": "^4.2.0",
+    "koa-combine-routers": "^4.0.2",
+    "koa-router": "^8.0.8",
+    "koa-static": "^5.0.0",
+    "uuid": "^8.3.2"
+  }
+}
