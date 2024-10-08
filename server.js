@@ -1,46 +1,60 @@
-const Koa = require('koa')
-const http = require('http')
-const KoaBody = require('koa-body');
-const router = require('./routers');
-const koaBody = require('koa-body');
+const http = require("http");
+const Koa = require("koa");
+const koaBody = require("koa-body");
+const cors = require("@koa/cors");
+const Router = require("koa-router");
+const router = new Router();
+
+const newsGenerator = require("./src/data/newsGenerator");
 
 const app = new Koa();
+const PORT = process.env.PORT || 8080;
+const server = http.createServer(app.callback());
 
-app.use(koaBody({
-  urlencoded:true,
-}))
-app.use((ctx,next) =>{
-  const origin = ctx.request.get('Origin')
-  if(!origin){
-    return next()
-  }
-  const headers = { 'Access-Control-Allow-Origin': '*', };
-  if (ctx.request.method !== 'OPTIONS') {
-    ctx.response.set({ ...headers });
-    try {
-      return next();
-    } catch (e) {
-      e.headers = { ...e.headers, ...headers };
-      throw e;
-    }
-  }
-  if (ctx.request.get('Access-Control-Request-Method')) {
-    ctx.response.set({
-      ...headers,
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH',
-    });
+app.use(cors());
 
-    if (ctx.request.get('Access-Control-Request-Headers')) {
-      ctx.response.set('Access-Control-Allow-Headers', ctx.request.get('Access-Control-Request-Headers'));
-    }
+app.use(
+  koaBody({
+    text: true,
+    urlencoded: true,
+    json: true,
+    multipart: true,
+  })
+);
 
-    ctx.response.status = 204;
+app.use(router.routes());
+app.use(router.allowedMethods());
+
+app.use(async (ctx, next) => {
+  const origin = ctx.request.get("Origin");
+  if (!origin) {
+    return await next();
   }
+
+  // => CORS
+  app.use(
+    cors({
+      origin: "*",
+      "Access-Control-Allow-Origin": true,
+      "X-Requested-With": true, //возможно это поможет
+      allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    })
+  );
 });
 
-//TODO: write code here
+const fakeData = new newsGenerator();
+fakeData.start();
 
-app.use(router());
-const port = process.env.PORT || 7090;
-const server = http.createServer(app.callback());
-server.listen(port);
+router.get("/news/latest", async (ctx) => {
+  fakeData.filteredNews(fakeData.newsList, 4);
+
+  ctx.response.body = JSON.stringify({
+    status: "ok",
+    data: fakeData.newsList,
+  });
+  console.log(ctx.response.body, "result");
+});
+
+server.listen(PORT, () =>
+  console.log(`Koa server has been started on port ${PORT} ...`)
+);
